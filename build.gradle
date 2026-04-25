@@ -6,6 +6,14 @@ tasks.register('cloneJcef', Exec) {
     commandLine 'git', 'submodule', 'update', '--init', '--recursive', 'common/java-cef'
 }
 
+project(':common') {
+    afterEvaluate {
+        tasks.named('compileJcefJava') {
+            dependsOn(rootProject.tasks.named('cloneJcef'))
+        }
+    }
+}
+
 // https://gist.github.com/JonasGroeger/7620911
 def getCheckedOutGitCommitHash(Project mcefParent) {
     def gitFolder = "$mcefParent.projectDir/.git/modules/common/java-cef/"
