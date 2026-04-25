@@ -16,6 +16,11 @@
  *     License along with this library; if not, write to the Free Software
  *     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
  *     USA
+ *
+ *     This file was modified on 2026-04-25 to port the mod to Minecraft 1.21.8.
+ *     Changes: replaced removed RenderSystem.bindTexture/pixelStore calls with
+ *     GlStateManager equivalents; register MCEFRenderer with Minecraft's
+ *     TextureManager on browser creation and expose getTextureLocation().
  */
 
 package com.cinemamod.mcef;

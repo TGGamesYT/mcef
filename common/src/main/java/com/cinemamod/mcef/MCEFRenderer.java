@@ -16,6 +16,12 @@
  *     License along with this library; if not, write to the Free Software
  *     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
  *     USA
+ *
+ *     This file was modified on 2026-04-25 to port the mod to Minecraft 1.21.8.
+ *     Changes: replaced removed RenderSystem texture/pixel-store methods with
+ *     GlStateManager equivalents; switched from raw OpenGL texture IDs to
+ *     GpuTexture/GpuTextureView via RenderSystem.getDevice(); extended
+ *     AbstractTexture so the renderer can be registered with TextureManager.
  */
 
 package com.cinemamod.mcef;

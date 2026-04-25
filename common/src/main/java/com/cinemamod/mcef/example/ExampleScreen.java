@@ -16,6 +16,10 @@
  *     License along with this library; if not, write to the Free Software
  *     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
  *     USA
+ *
+ *     This file was modified on 2026-04-25 to port the mod to Minecraft 1.21.8.
+ *     Changes: replaced manual shader/tessellator texture rendering (removed in
+ *     1.21.8) with GuiGraphics.blit(RenderPipelines.GUI_TEXTURED, ...).
  */
 
 package com.cinemamod.mcef.example;
