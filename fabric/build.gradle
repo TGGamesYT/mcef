@@ -73,6 +73,7 @@ dependencies {
 loom {
     mixin {
         defaultRefmapName = "mcef.refmap.json"
+        useLegacyMixinAp = true
     }
 }
 

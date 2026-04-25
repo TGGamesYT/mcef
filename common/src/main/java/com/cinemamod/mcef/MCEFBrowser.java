@@ -21,9 +21,9 @@
 package com.cinemamod.mcef;
 
 import com.cinemamod.mcef.listeners.MCEFCursorChangeListener;
-import com.mojang.blaze3d.platform.GlStateManager;
-import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.opengl.GlStateManager;
 import net.minecraft.client.Minecraft;
+import net.minecraft.resources.ResourceLocation;
 import org.cef.browser.CefBrowser;
 import org.cef.browser.CefBrowserOsr;
 import org.cef.callback.CefDragData;
@@ -47,10 +47,16 @@ import static org.lwjgl.opengl.GL11.*;
  * browser control shortcuts, cursor handling, drag & drop support.
  */
 public class MCEFBrowser extends CefBrowserOsr {
+    private static int browserIdCounter = 0;
+
     /**
      * The renderer for the browser.
      */
     private final MCEFRenderer renderer;
+    /**
+     * ResourceLocation under which the renderer is registered with the TextureManager.
+     */
+    private final ResourceLocation textureLocation;
     /**
      * Stores information about drag & drop.
      */
@@ -99,14 +105,22 @@ public class MCEFBrowser extends CefBrowserOsr {
     public MCEFBrowser(MCEFClient client, String url, boolean transparent, boolean autoDSF) {
         super(client.getHandle(), url, transparent, null);
         renderer = new MCEFRenderer(transparent);
+        textureLocation = ResourceLocation.fromNamespaceAndPath("mcef", "browser/" + browserIdCounter++);
         cursorChangeListener = (cefCursorID) -> setCursor(CefCursorType.fromId(cefCursorID));
         this.autoDSF = autoDSF;
 
-        Minecraft.getInstance().submit(renderer::initialize);
+        Minecraft.getInstance().submit(() -> {
+            renderer.initialize();
+            Minecraft.getInstance().getTextureManager().register(textureLocation, renderer);
+        });
     }
 
     public MCEFRenderer getRenderer() {
         return renderer;
+    }
+
+    public ResourceLocation getTextureLocation() {
+        return textureLocation;
     }
 
     public void setAutoDSF(boolean autoDSF) {
@@ -216,8 +230,8 @@ public class MCEFBrowser extends CefBrowserOsr {
                 renderer.onPaint(buffer, width, height);
             } else {
                 if (renderer.getTextureID() == 0) return;
-                RenderSystem.bindTexture(renderer.getTextureID());
-                RenderSystem.pixelStore(GL_UNPACK_ROW_LENGTH, width);
+                GlStateManager._bindTexture(renderer.getTextureID());
+                GlStateManager._pixelStore(GL_UNPACK_ROW_LENGTH, width);
                 for (Rectangle dirtyRect : dirtyRects) {
                     GlStateManager._pixelStore(GL_UNPACK_SKIP_PIXELS, dirtyRect.x);
                     GlStateManager._pixelStore(GL_UNPACK_SKIP_ROWS, dirtyRect.y);
@@ -235,7 +249,7 @@ public class MCEFBrowser extends CefBrowserOsr {
                     } else if (popupDrawn) {
                         // else, a use copy of the popup graphics, as it needs to remain visible
                         // and for some reason that I do not for the life of me understand, chromium does not seem to keep this data in memory outside of the paint loop, meaning it has to be copied around, which wastes performance
-                        RenderSystem.pixelStore(GL_UNPACK_ROW_LENGTH, popupSize.width);
+                        GlStateManager._pixelStore(GL_UNPACK_ROW_LENGTH, popupSize.width);
                         GlStateManager._pixelStore(GL_UNPACK_SKIP_PIXELS, 0);
                         GlStateManager._pixelStore(GL_UNPACK_SKIP_ROWS, 0);
                         renderer.onPaint(popupGraphics, popupSize.x, popupSize.y, popupSize.width, popupSize.height);
@@ -244,11 +258,11 @@ public class MCEFBrowser extends CefBrowserOsr {
             }
         } else {
             if (renderer.getTextureID() == 0) return;
-            RenderSystem.bindTexture(renderer.getTextureID());
+            GlStateManager._bindTexture(renderer.getTextureID());
             int start = buffer.capacity();
             int end = 0;
             for (Rectangle dirtyRect : dirtyRects) {
-                RenderSystem.pixelStore(GL_UNPACK_ROW_LENGTH, popupSize.width);
+                GlStateManager._pixelStore(GL_UNPACK_ROW_LENGTH, popupSize.width);
                 GlStateManager._pixelStore(GL_UNPACK_SKIP_PIXELS, dirtyRect.x);
                 GlStateManager._pixelStore(GL_UNPACK_SKIP_ROWS, dirtyRect.y);
                 renderer.onPaint(buffer, popupSize.x + dirtyRect.x, popupSize.y + dirtyRect.y, dirtyRect.width, dirtyRect.height);
@@ -486,14 +500,14 @@ public class MCEFBrowser extends CefBrowserOsr {
 
     // Closing
     public void close() {
-        renderer.cleanup();
+        renderer.close();
         cursorChangeListener.onCursorChange(0);
         super.close(true);
     }
 
     @Override
     protected void finalize() throws Throwable {
-        Minecraft.getInstance().submit(renderer::cleanup);
+        Minecraft.getInstance().submit(renderer::close);
         super.finalize();
     }
 
